@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quinielas 351 - J8 Compact</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:#050905;color:#fff;padding-bottom:90px}
+.header{text-align:center;padding:10px;background:#000;border-bottom:2px solid #00ff15;position:sticky;top:0;z-index:20}
+.header h1{margin:0;font-size:28px;background:linear-gradient(90deg,#00ff15,#fff,#ff073a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:480px;margin:auto;padding:8px}
+.card{background:#101510;border:1px solid #1e3a1e;border-radius:12px;padding:8px}
+.card input{width:100%;padding:8px;border-radius:8px;border:1px solid #254a25;background:#060a06;color:#fff;font-size:14px}
+.card input.error{border-color:#ff073a;box-shadow:0 0 8px #ff073a;background:#1a0608}
+.error-msg{color:#ff073a;font-size:11px;margin-top:4px;display:none}
+.error-msg.show{display:block}
+.match{display:flex;align-items:center;justify-content:space-between;background:#080c08;border:1px solid #1a2e1a;border-radius:8px;padding:5px 6px;margin-top:6px}
+.match img{width:26px;height:26px;background:#fff;border-radius:50%;padding:2px;object-fit:contain}
+.match b{font-size:9px;width:60px;text-align:center}
+.lev{display:flex;gap:4px}
+.lev button{width:28px;height:28px;border-radius:6px;border:1px solid #333;background:#111;color:#fff;font-weight:900;font-size:13px}
+.lev button.active.l{background:#00ff15;color:#000;box-shadow:0 0 8px #00ff15}
+.lev button.active.e{background:#fff;color:#000;box-shadow:0 0 8px #fff}
+.lev button.active.v{background:#ff073a;color:#fff;box-shadow:0 0 8px #ff073a}
+.btn{width:100%;padding:10px;border-radius:10px;font-weight:900;border:none;margin-top:8px}
+.btn-add{background:#00ff15;color:#000}
+.btn-add:disabled{opacity:.4}
+.mini{background:#0a0f0a;border:1px solid #1e3a1e;border-radius:8px;padding:6px 8px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.mini b{color:#00ff15}
+.mini span{opacity:.8;letter-spacing:1px}
+.bar{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:auto;background:#000;border-top:2px solid #00ff15;padding:8px 10px;display:flex;gap:8px;align-items:center}
+.btn-send{flex:1;background:#00ff15;color:#000;border:none;border-radius:10px;font-weight:900;padding:12px}
+.btn-send:disabled{opacity:.4}
+</style>
+</head>
+<body>
+<div class="header"><h1>QUINIELAS 351</h1><div style="font-size:10px;color:#aaa">JORNADA 8 • COMPACTA • L E V • $20 • NOMBRE OBLIGATORIO</div></div>
+
+<div class="container">
+<div class="card" id="formCard">
+<input id="nombre" placeholder="Tu nombre o apodo *OBLIGATORIO*">
+<div id="nombreError" class="error-msg">⚠️ Debes poner tu nombre o apodo para guardar</div>
+<div id="juegos"></div>
+<button class="btn btn-add" id="btnGuardar" onclick="guardar()">+ GUARDAR ESTA QUINIELA ($20)</button>
+</div>
+
+<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+<b style="font-size:12px;color:#00ff15">MIS QUINIELAS GUARDADAS</b>
+<button style="background:none;border:1px solid #ff073a;color:#ff073a;border-radius:6px;font-size:10px;padding:3px 8px" onclick="borrarTodo()">BORRAR TODO</button>
+</div>
+<div id="lista"></div>
+</div>
+
+<div class="bar">
+<div><div id="total" style="font-weight:900;font-size:13px">TOTAL: $0</div><div id="count" style="font-size:10px;opacity:.6">0 quinielas</div></div>
+<button class="btn-send" id="btnEnviar" onclick="enviar()">ENVIAR 3513743191 📲</button>
+</div>
+
+<script>
+const escudos={
+"NECAXA":"https://escudosfc.com.br/images/necaxa.png",
+"PUEBLA":"https://escudosfc.com.br/images/puebla_mex.png",
+"ATLANTE":"https://escudosfc.com.br/images/atlante.png",
+"PACHUCA":"https://escudosfc.com.br/images/pachuca.png",
+"TIJUANA":"https://escudosfc.com.br/images/tihuana_mex.png",
+"QUERETARO":"https://escudosfc.com.br/images/gallosblancos.png",
+"TOLUCA":"https://escudosfc.com.br/images/toluca.jpg",
+"ATLAS":"https://escudosfc.com.br/images/atlas.png",
+"LEON":"https://escudosfc.com.br/images/leon_mex.png",
+"SAN LUIS":"https://escudosfc.com.br/images/san_luis_mex.png",
+"MONTERREY":"https://escudosfc.com.br/images/monterrey.png",
+"TIGRES":"https://escudosfc.com.br/images/tigres.jpg",
+"CRUZ AZUL":"https://escudosfc.com.br/images/cruzazul.png",
+"AMÉRICA":"https://escudosfc.com.br/images/amex.png",
+"SANTOS":"https://escudosfc.com.br/images/santoslaguna2_mex.png",
+"JUAREZ":"https://escudosfc.com.br/images/juarez.png",
+"CHIVAS":"https://escudosfc.com.br/images/chivas_mex.png",
+"PUMAS":"https://escudosfc.com.br/images/univ_guad_mex.png"
+};
+const juegos=[
+["NECAXA","PUEBLA"],
+["ATLANTE","PACHUCA"],
+["TIJUANA","QUERETARO"],
+["TOLUCA","ATLAS"],
+["LEON","SAN LUIS"],
+["MONTERREY","TIGRES"],
+["CRUZ AZUL","AMÉRICA"],
+["SANTOS","JUAREZ"],
+["CHIVAS","PUMAS"]
+];
+let guardadas=[];
+
+function renderForm(){
+ let h=''; juegos.forEach((j,i)=>{
+  h+=`<div class="match"><b>${j[0]}</b><img src="${escudos[j[0]]}"><div style="font-size:9px;color:#666">VS</div><img src="${escudos[j[1]]}"><b>${j[1]}</b><div class="lev" data-i="${i}"><button class="l" onclick="sel(this)">L</button><button class="e" onclick="sel(this)">E</button><button class="v" onclick="sel(this)">V</button></div></div>`;
+ });
+ document.getElementById('juegos').innerHTML=h;
+}
+function sel(b){[...b.parentElement.children].forEach(x=>x.classList.remove('active'));b.classList.add('active');b.parentElement.dataset.sel=b.innerText;}
+
+function validarNombre(){
+  const input = document.getElementById('nombre');
+  const error = document.getElementById('nombreError');
+  const nom = input.value.trim();
+  if(!nom){
+    input.classList.add('error');
+    error.classList.add('show');
+    return false;
+  }else{
+    input.classList.remove('error');
+    error.classList.remove('show');
+    return true;
+  }
+}
+
+function guardar(){
+ const input = document.getElementById('nombre');
+ const nom = input.value.trim();
+ 
+ if(!validarNombre()){
+   input.focus();
+   return;
+ }
+
+ let picks=[]; let falta=false;
+ document.querySelectorAll('.lev').forEach(g=>{let s=g.dataset.sel||'?'; if(s=='?') falta=true; picks.push(s);});
+ if(falta && !confirm('Te faltan partidos ¿guardar así?')) return;
+ guardadas.push({nom,picks});
+ input.value='';
+ document.querySelectorAll('.lev').forEach(g=>{g.dataset.sel='';[...g.children].forEach(c=>c.classList.remove('active'))});
+ renderLista(); upd();
+}
+
+function renderLista(){
+ let h=''; guardadas.forEach((q,i)=>{
+  h+=`<div class="mini"><div><b>#${i+1} ${q.nom.toUpperCase()}</b> <span>${q.picks.join(' ')}</span></div><span style="color:#ff073a;cursor:pointer" onclick="borrarUna(${i})">✕</span></div>`;
+ });
+ document.getElementById('lista').innerHTML=h||'<div style="font-size:11px;opacity:.5;margin-top:8px">Aún no guardas ninguna</div>';
+}
+function borrarUna(i){guardadas.splice(i,1);renderLista();upd();}
+function borrarTodo(){if(guardadas.length && confirm('¿Borrar todas?')){guardadas=[];renderLista();upd();}}
+function upd(){document.getElementById('total').innerText=`TOTAL: $${guardadas.length*20}`;document.getElementById('count').innerText=`${guardadas.length} quiniela(s)`;}
+
+function enviar(){
+ if(!guardadas.length) return alert('Guarda al menos 1 quiniela con tu nombre');
+ let msg=`*🇲🇽 QUINIELAS 351 J8*%0A%0A`;
+ guardadas.forEach((q,i)=>{
+  msg+=`*${i+1}. ${q.nom.toUpperCase()}* → ${q.picks.join(' ')}%0A`;
+  q.picks.forEach((s,k)=>{let r=s=='L'?juegos[k][0]:s=='V'?juegos[k][1]:s=='E'?'EMPATE':'?';msg+=` ${k+1}. ${juegos[k][0]} vs ${juegos[k][1]} = ${r} [${s}]%0A`;});
+  msg+=`%0A`;
+ });
+ msg+=`TOTAL $${guardadas.length*20}`;
+ window.open('https://wa.me/523513743191?text='+msg,'_blank');
+}
+
+document.getElementById('nombre').addEventListener('input', ()=>{
+  if(document.getElementById('nombre').value.trim()){
+    document.getElementById('nombre').classList.remove('error');
+    document.getElementById('nombreError').classList.remove('show');
+  }
+});
+
+renderForm();
+</script>
+</body>
+</html>
